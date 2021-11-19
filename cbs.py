@@ -2,7 +2,8 @@ import time as timer
 import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
-import sys
+
+USE_ITERATIVE_DEEPENING = False
 
 def paths_violate_constraint(constraint, paths):
     assert constraint['positive'] is True
@@ -163,6 +164,22 @@ class CBSSolver(object):
         return node
 
     def find_solution(self, disjoint=True):
+        """ Finds paths for all agents from their start locations to their goal locations
+
+        disjoint    - use disjoint splitting or not
+        """
+
+        if(USE_ITERATIVE_DEEPENING):
+            return self.IterativeDeepeningCBS(disjoint)
+        else:
+            return self.normalCBS(disjoint)
+
+    def IterativeDeepeningCBS(self, disjoint=True):
+        ## to be implemented
+
+        return None
+
+    def normalCBS(self, disjoint=True):
         """ Finds paths for all agents from their start locations to their goal locations
 
         disjoint    - use disjoint splitting or not

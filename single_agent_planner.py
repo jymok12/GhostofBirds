@@ -1,5 +1,7 @@
 import heapq
 
+USE_ITERATIVE_DEEPENING = False
+
 def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0,0)]
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
@@ -163,6 +165,26 @@ def compare_nodes(n1, n2):
 
 
 def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
+    """ my_map      - binary obstacle map
+        start_loc   - start position
+        goal_loc    - goal position
+        agent       - the agent that is being re-planned
+        constraints - constraints defining where robot should or cannot go at each timestep
+    """
+
+    ##############################
+    # Task 1.1: Extend the A* search to search in the space-time domain
+    #           rather than space domain, only.
+    if(USE_ITERATIVE_DEEPENING):
+        return iterative_deepening_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints)
+    else:
+        return normal_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints)
+        
+
+def iterative_deepening_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
+    return (0, None)
+
+def normal_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     """ my_map      - binary obstacle map
         start_loc   - start position
         goal_loc    - goal position
