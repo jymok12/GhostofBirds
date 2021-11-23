@@ -182,7 +182,23 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         
 
 def iterative_deepening_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
-    return (0, None)
+    if start_loc == goal_loc:
+        return h_values
+    
+    approximate = h_values + agent[start_loc][goal_loc]
+    if approximate > constraints:
+        return approximate
+    
+    smallest_value = float("inf")
+    for i in range(len(my_map[start_loc])):
+        if my_map[start_loc][i] != 0:
+            t = iterative_deepening_a_star(my_map, agent, i,goal_loc, h_values + my_map[start_loc][i], constraints)
+            if t < 0:
+                return t
+            elif t < smallest_value:
+                smallest_value = t
+                print (smallest_value)
+    return smallest_value
 
 def normal_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     """ my_map      - binary obstacle map
