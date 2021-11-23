@@ -182,23 +182,53 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         
 
 def iterative_deepening_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
-    if start_loc == goal_loc:
-        return h_values
-    
-    approximate = h_values + agent[start_loc][goal_loc]
-    if approximate > constraints:
-        return approximate
-    
-    smallest_value = float("inf")
-    for i in range(len(my_map[start_loc])):
-        if my_map[start_loc][i] != 0:
-            t = iterative_deepening_a_star(my_map, agent, i,goal_loc, h_values + my_map[start_loc][i], constraints)
-            if t < 0:
-                return t
-            elif t < smallest_value:
-                smallest_value = t
-                print (smallest_value)
-    return smallest_value
+    maxNodeCount = 0
+    c_table = build_constraint_table(constraints, agent)
+    root = {
+        'loc': start_loc, 
+        'g_val': 0, 
+        'h_val': h_values[start_loc], 
+        'timestep': 0,
+        'parent': None
+    }
+    min_time = 0
+    for c in constraints:
+        if(c['agent']==agent and c['timestep']>min_time):
+            min_time = c['timestep']
+    time_limit = len(my_map)*len(my_map[0])//2
+    for iterative_time_limit in range(1, time_limit):
+        print("start time limit = ", iterative_time_limit)
+        open_list = []
+        open_list.append(root)
+        while(len(open_list)>0):
+            curr = open_list.pop()
+            maxNodeCount = max(maxNodeCount, len(open_list))
+            if(curr['loc'] == goal_loc and curr['timestep'] >= min_time):
+                return (maxNodeCount, get_path(curr))
+            if(curr['timestep']>iterative_time_limit):
+                continue
+            child_nodes = []
+            for dir in range(5):
+                child_loc = move(curr['loc'], dir)
+                if((not 0<=child_loc[0]<len(my_map)) or (not 0<= child_loc[1]<len(my_map[0]))):
+                    continue
+                if my_map[child_loc[0]][child_loc[1]]:
+                    continue
+                if(is_constrained(curr['loc'], child_loc, curr['timestep']+1, c_table)):
+                    continue
+                child = {
+                    'loc': child_loc,
+                    'g_val': curr['g_val'] + 1,
+                    'h_val': h_values[child_loc],
+                    'timestep': curr['timestep']+1,
+                    'parent': curr
+                }
+                child_nodes.append(child)
+            child_nodes.sort(key=lambda node:-1*(node['g_val'] + node['h_val']))
+            open_list.extend(child_nodes)
+
+
+    return (maxNodeCount, None)
 
 def normal_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     """ my_map      - binary obstacle map
@@ -215,14 +245,13 @@ def normal_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
 
     open_list = []
     closed_list = dict()
-    earliest_goal_timestep = 0
     h_value = h_values[start_loc]
     c_table = build_constraint_table(constraints, agent)
     root = {
         'loc': start_loc, 
         'g_val': 0, 
         'h_val': h_value, 
-        'timestep': earliest_goal_timestep,
+        'timestep': 0,
         'parent': None
     }
     min_time = 0
@@ -238,6 +267,7 @@ def normal_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if(curr['loc'] == goal_loc and curr['timestep'] >= min_time):
+            print(curr['timestep'])
             return (maxNodeCount, get_path(curr))
         if(curr['timestep']>time_limit):
             continue
