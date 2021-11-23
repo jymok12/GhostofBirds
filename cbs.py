@@ -3,7 +3,7 @@ import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 
-USE_ITERATIVE_DEEPENING = False
+USE_ITERATIVE_DEEPENING = True
 
 def paths_violate_constraint(constraint, paths):
     assert constraint['positive'] is True
@@ -163,6 +163,18 @@ class CBSSolver(object):
         self.num_of_expanded += 1
         return node
 
+    def simple_add_nodes(self, nodes):
+        nodes.sort(key=lambda node: -1*node['cost'])
+        self.open_list.extend(nodes)
+        print("Generate node {}".format(self.num_of_generated))
+        self.num_of_generated += len(nodes)
+
+    def simple_pop_node(self):
+        node = self.open_list.pop()
+        print("Expand node {}".format(self.num_of_expanded))
+        self.num_of_expanded += 1
+        return node
+
     def find_solution(self, disjoint=True):
         """ Finds paths for all agents from their start locations to their goal locations
 
@@ -175,8 +187,73 @@ class CBSSolver(object):
             return self.normalCBS(disjoint)
 
     def IterativeDeepeningCBS(self, disjoint=True):
+        self.start_time = timer.time()
         ## to be implemented
+        maxNodes = 0
 
+        root = {'cost': 0,
+                'constraints': [],
+                'paths': [],
+                'collisions': []}
+        for i in range(self.num_of_agents):  # Find initial path for each agent
+            (maxNodes, path) = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
+                          i, root['constraints'])
+            if path is None:
+                raise BaseException('No solutions')
+            root['paths'].append(path)
+
+        root['cost'] = get_sum_of_cost(root['paths'])
+        root['collisions'] = detect_collisions(root['paths'])
+
+        iteration_limit = 1000
+        for cost_limit in range(root['cost']+1, iteration_limit):
+            self.open_list=[root]
+            self.num_of_generated = 1
+            self.num_of_expanded = 1
+            while(self.open_list):
+                curr = self.simple_pop_node()
+                if(len(curr['collisions']) == 0):
+                    self.print_results(curr, maxNodes)
+                    return curr['paths']
+                collisions = curr['collisions']
+                collision_sample = collisions[random.randint(0, len(collisions)-1)]
+                if(disjoint):
+                    new_constraints = disjoint_splitting(collision_sample)
+                else:
+                    new_constraints = standard_splitting(collision_sample)
+                new_nodes = []
+                for c in new_constraints:
+                    new_node = {
+                        'cost': 0,
+                        'constraints': [c],
+                        'paths': [],
+                        'collisions': []
+                    }
+                    new_node['constraints'].extend(curr['constraints'])
+                    new_node['paths'].extend(curr['paths'])
+                    agents = [c['agent']]
+                    if('positive' in c and c['positive']):
+                        agents = paths_violate_constraint(c, new_node['paths'])
+                    impossible_flag = False
+                    maxSubNodes = 0
+                    for agent in agents:
+                        if(impossible_flag):
+                            continue
+                        (subNodeCount, path) = a_star(self.my_map, self.starts[agent], self.goals[agent], self.heuristics[agent],
+                                        agent, new_node['constraints'])
+                        maxSubNodes = max(maxSubNodes, subNodeCount)
+                        if(path != None):
+                            new_node['paths'][agent] = path
+                        else:
+                            impossible_flag = True
+                    maxNodes = max(maxNodes, len(self.open_list)+maxSubNodes)
+                    if(not impossible_flag):
+                        new_node['collisions'] = detect_collisions(new_node['paths'])
+                        new_node['cost'] = get_sum_of_cost(new_node['paths'])
+                        if(new_node['cost']<=cost_limit):
+                            new_nodes.append(new_node)
+                self.simple_add_nodes(new_nodes)
+        
         return None
 
     def normalCBS(self, disjoint=True):
