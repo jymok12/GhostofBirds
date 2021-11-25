@@ -144,6 +144,7 @@ class CBSSolver(object):
         self.num_of_generated = 0
         self.num_of_expanded = 0
         self.CPU_time = 0
+        self.maxNodes = 0
 
         self.open_list = []
 
@@ -154,24 +155,24 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        print("Generate node {}".format(self.num_of_generated))
+        # print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        print("Expand node {}".format(id))
+        # print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
     def simple_add_nodes(self, nodes):
         nodes.sort(key=lambda node: -1*node['cost'])
         self.open_list.extend(nodes)
-        print("Generate node {}".format(self.num_of_generated))
+        # print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += len(nodes)
 
     def simple_pop_node(self):
         node = self.open_list.pop()
-        print("Expand node {}".format(self.num_of_expanded))
+        # print("Expand node {}".format(self.num_of_expanded))
         self.num_of_expanded += 1
         return node
 
@@ -181,10 +182,12 @@ class CBSSolver(object):
         disjoint    - use disjoint splitting or not
         """
 
+        path = None
         if(USE_ITERATIVE_DEEPENING):
-            return self.IterativeDeepeningCBS(disjoint)
+            path = self.IterativeDeepeningCBS(disjoint)
         else:
-            return self.normalCBS(disjoint)
+            path = self.normalCBS(disjoint)
+        return (path, self.CPU_time, self.num_of_expanded, self.num_of_generated, self.maxNodes)
 
     def IterativeDeepeningCBS(self, disjoint=True):
         self.start_time = timer.time()
@@ -347,10 +350,11 @@ class CBSSolver(object):
 
     def print_results(self, node, maxNodes):
         print("\n Found a solution! \n")
-        CPU_time = timer.time() - self.start_time
+        self.CPU_time = timer.time() - self.start_time
+        self.maxNodes = maxNodes
         for path in node['paths']:
             print("\t",path)
-        print("CPU time (s):    {:.10f}".format(CPU_time))
+        print("CPU time (s):    {:.10f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
         print("Expanded nodes:  {}".format(self.num_of_expanded))
         print("Generated nodes: {}".format(self.num_of_generated))

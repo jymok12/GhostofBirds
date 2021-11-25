@@ -197,7 +197,7 @@ def iterative_deepening_a_star(my_map, start_loc, goal_loc, h_values, agent, con
             min_time = c['timestep']
     time_limit = len(my_map)*len(my_map[0])//2
     for iterative_time_limit in range(1, time_limit):
-        print("start time limit = ", iterative_time_limit)
+        # print("start time limit = ", iterative_time_limit)
         open_list = []
         open_list.append(root)
         while(len(open_list)>0):
@@ -267,7 +267,7 @@ def normal_a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if(curr['loc'] == goal_loc and curr['timestep'] >= min_time):
-            print(curr['timestep'])
+            # print(curr['timestep'])
             return (maxNodeCount, get_path(curr))
         if(curr['timestep']>time_limit):
             continue
