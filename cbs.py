@@ -3,7 +3,7 @@ import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 
-USE_ITERATIVE_DEEPENING = False
+USE_ITERATIVE_DEEPENING = True
 
 def paths_violate_constraint(constraint, paths):
     assert constraint['positive'] is True
@@ -216,7 +216,7 @@ class CBSSolver(object):
             while(self.open_list):
                 curr = self.simple_pop_node()
                 if(len(curr['collisions']) == 0):
-                    self.print_results(curr, maxNodes)
+                    self.print_results(curr, maxNodes, len(root['collisions']))
                     return (len(root['collisions']), curr['paths'])
                 collisions = curr['collisions']
                 collision_sample = collisions[random.randint(0, len(collisions)-1)]
@@ -307,7 +307,7 @@ class CBSSolver(object):
         while(self.open_list):
             curr = self.pop_node()
             if(len(curr['collisions']) == 0):
-                self.print_results(curr, maxNodes)
+                self.print_results(curr, maxNodes, len(root['collisions']))
                 return (len(root['collisions']), curr['paths'])
             collisions = curr['collisions']
             collision_sample = collisions[random.randint(0, len(collisions)-1)]
@@ -348,14 +348,15 @@ class CBSSolver(object):
         return None
 
 
-    def print_results(self, node, maxNodes):
+    def print_results(self, node, maxNodes, collisionCount):
         print("\n Found a solution! \n")
         self.CPU_time = timer.time() - self.start_time
         self.maxNodes = maxNodes
         for path in node['paths']:
             print("\t",path)
-        print("CPU time (s):    {:.10f}".format(self.CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
-        print("Expanded nodes:  {}".format(self.num_of_expanded))
-        print("Generated nodes: {}".format(self.num_of_generated))
-        print("Maximum nodes:   {}".format(maxNodes))
+        print("CPU time (s):        {:.10f}".format(self.CPU_time))
+        print("Sum of costs:        {}".format(get_sum_of_cost(node['paths'])))
+        print("Expanded nodes:      {}".format(self.num_of_expanded))
+        print("Generated nodes:     {}".format(self.num_of_generated))
+        print("Maximum nodes:       {}".format(maxNodes))
+        print("Initial Collision:   {}".format(collisionCount))
