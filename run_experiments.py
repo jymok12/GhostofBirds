@@ -82,20 +82,20 @@ if __name__ == '__main__':
 
 
     result_file = open("results.csv", "w", buffering=1)
-    result_file.write("{},{},{},{},{},{}\n".format("File","cost","time","expanded nodes", "generated nodes", "maximum nodes"))
+    result_file.write("{},{},{},{},{},{},{}\n".format("File","cost","time","expanded nodes", "generated nodes", "maximum nodes", "Initial collision count"))
 
     
     for file in sorted(glob.glob(args.instance)):
         print("\n\n\n***Import instance {}***".format(file))
         my_map, starts, goals = import_mapf_instance(file)
         print_mapf_instance(my_map, starts, goals)
-        result_file.write("{},{},{},{},{},{}\n".format(file,"","","", "", ""))
+        result_file.write("{},{},{},{},{},{},{}\n".format(file,"","","", "", "",""))
         for i in range(args.repeat):
             cbs = CBSSolver(my_map, starts, goals)
-            (paths, runtime, expanded, generated, maxNode) = cbs.find_solution(args.disjoint)
+            (paths, runtime, expanded, generated, maxNode, collisionCount) = cbs.find_solution(args.disjoint)
 
             cost = get_sum_of_cost(paths)
-            result_file.write("{},{},{},{},{},{}\n".format("", cost, runtime, expanded, generated, maxNode))
+            result_file.write("{},{},{},{},{},{},{}\n".format("", cost, runtime, expanded, generated, maxNode, collisionCount))
             
             if((not args.batch) and args.repeat==1 ):
                 print("***Test paths on a simulation***")

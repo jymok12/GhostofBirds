@@ -3,7 +3,7 @@ import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 
-USE_ITERATIVE_DEEPENING = True
+USE_ITERATIVE_DEEPENING = False
 
 def paths_violate_constraint(constraint, paths):
     assert constraint['positive'] is True
@@ -184,10 +184,10 @@ class CBSSolver(object):
 
         path = None
         if(USE_ITERATIVE_DEEPENING):
-            path = self.IterativeDeepeningCBS(disjoint)
+            (conflictCount, path) = self.IterativeDeepeningCBS(disjoint)
         else:
-            path = self.normalCBS(disjoint)
-        return (path, self.CPU_time, self.num_of_expanded, self.num_of_generated, self.maxNodes)
+            (conflictCount, path) = self.normalCBS(disjoint)
+        return (path, self.CPU_time, self.num_of_expanded, self.num_of_generated, self.maxNodes, conflictCount)
 
     def IterativeDeepeningCBS(self, disjoint=True):
         self.start_time = timer.time()
@@ -217,7 +217,7 @@ class CBSSolver(object):
                 curr = self.simple_pop_node()
                 if(len(curr['collisions']) == 0):
                     self.print_results(curr, maxNodes)
-                    return curr['paths']
+                    return (len(root['collisions']), curr['paths'])
                 collisions = curr['collisions']
                 collision_sample = collisions[random.randint(0, len(collisions)-1)]
                 if(disjoint):
@@ -308,7 +308,7 @@ class CBSSolver(object):
             curr = self.pop_node()
             if(len(curr['collisions']) == 0):
                 self.print_results(curr, maxNodes)
-                return curr['paths']
+                return (len(root['collisions']), curr['paths'])
             collisions = curr['collisions']
             collision_sample = collisions[random.randint(0, len(collisions)-1)]
             if(disjoint):
