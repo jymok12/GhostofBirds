@@ -3,7 +3,7 @@ import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 
-USE_ITERATIVE_DEEPENING = True
+USE_ITERATIVE_DEEPENING = False
 
 def paths_violate_constraint(constraint, paths):
     assert constraint['positive'] is True
