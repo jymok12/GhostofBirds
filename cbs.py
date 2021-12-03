@@ -207,6 +207,7 @@ class CBSSolver(object):
 
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
+        print("collisions: {}".format(len(root['collisions'])))
 
         iteration_limit = 1000
         for cost_limit in range(root['cost']+1, iteration_limit):
@@ -287,6 +288,7 @@ class CBSSolver(object):
 
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
+        print("collisions: {}".format(len(root['collisions'])))
         self.push_node(root)
 
         # # Task 3.1: Testing
