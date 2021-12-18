@@ -3,7 +3,7 @@ import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 
-USE_ITERATIVE_DEEPENING = False
+USE_ITERATIVE_DEEPENING = True
 
 def paths_violate_constraint(constraint, paths):
     assert constraint['positive'] is True
@@ -167,7 +167,7 @@ class CBSSolver(object):
     def simple_add_nodes(self, nodes):
         nodes.sort(key=lambda node: -1*node['cost'])
         self.open_list.extend(nodes)
-        # print("Generate node {}".format(self.num_of_generated))
+        # print("Generate {} node starting from {}".format(len(nodes),self.num_of_generated))
         self.num_of_generated += len(nodes)
 
     def simple_pop_node(self):
@@ -207,13 +207,13 @@ class CBSSolver(object):
 
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
-        print("collisions: {}".format(len(root['collisions'])))
+        # print("collisions: {}".format(len(root['collisions'])))
 
         iteration_limit = 1000
-        for cost_limit in range(root['cost']+1, iteration_limit):
+        self.num_of_generated = 1
+        self.num_of_expanded = 0
+        for cost_limit in range(root['cost'], iteration_limit):
             self.open_list=[root]
-            self.num_of_generated = 1
-            self.num_of_expanded = 1
             while(self.open_list):
                 curr = self.simple_pop_node()
                 if(len(curr['collisions']) == 0):
