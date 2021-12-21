@@ -6,6 +6,7 @@ from pathlib import Path
 from cbs import CBSSolver
 from visualize import Animation
 from single_agent_planner import get_sum_of_cost
+from numpy import median
 
 
 def print_mapf_instance(my_map, starts, goals):
@@ -67,6 +68,78 @@ def import_mapf_instance(filename):
     return my_map, starts, goals
 
 
+def getInstanceAverage(instances):
+    # result.append({
+    #             "cost": cost,
+    #             "runtime": runtime,
+    #             "nodeExpanded": expanded,
+    #             "nodeGenerated": generated,
+    #             "memoryUsed": maxNode,
+    #             "initialCollision": collisionCount
+    #         })
+    n = len(instances)
+    runtimeSum = 0
+    expandedNodeSum = 0
+    generatedNodeSum = 0
+    memorySum = 0
+    collisionSum = 0
+    for instance in instances:
+        runtimeSum += instance["runtime"]
+        expandedNodeSum += instance["nodeExpanded"]
+        generatedNodeSum += instance["nodeGenerated"]
+        memorySum += instance["memoryUsed"]
+        collisionSum += instance["initialCollision"]
+
+    return {
+        "runtime": runtimeSum/n,
+        "nodeExpanded": expandedNodeSum/n,
+        "nodeGenerated": generatedNodeSum/n,
+        "memoryUsed": memorySum/n,
+        "initialCollision": collisionSum/n
+    }
+
+def getInstanceMedian(instances):
+    # result.append({
+    #             "cost": cost,
+    #             "runtime": runtime,
+    #             "nodeExpanded": expanded,
+    #             "nodeGenerated": generated,
+    #             "memoryUsed": maxNode,
+    #             "initialCollision": collisionCount
+    #         })
+    n = len(instances)
+    runtimes = []
+    expandedNodes = []
+    generatedNodes = []
+    memorys = []
+    collisions = []
+    for instance in instances:
+        runtimes.append(instance["runtime"])
+        expandedNodes.append(instance["nodeExpanded"])
+        generatedNodes.append(instance["nodeGenerated"])
+        memorys.append(instance["memoryUsed"])
+        collisions.append(instance["initialCollision"])
+
+    return {
+        "runtime": median(runtimes),
+        "nodeExpanded": median(expandedNodes),
+        "nodeGenerated": median(generatedNodes),
+        "memoryUsed": median(memorys),
+        "initialCollision": median(collisions)
+    }
+
+def writeInstanceToFile(fileWriter, instanceName, cost, instanceInfo, sampleSize):
+    fileWriter.write("{},{},{},{},{},{},{},{}\n".format(
+            instanceName,
+            cost,
+            instanceInfo["runtime"],
+            instanceInfo["nodeExpanded"], 
+            instanceInfo["nodeGenerated"], 
+            instanceInfo["memoryUsed"],
+            instanceInfo["initialCollision"],
+            sampleSize
+        ))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs various MAPF algorithms')
     parser.add_argument('--instance', type=str, default=None,
@@ -81,25 +154,64 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    result_file = open("results.csv", "w", buffering=1)
-    result_file.write("{},{},{},{},{},{},{}\n".format("File","cost","time","expanded nodes", "generated nodes", "maximum nodes", "Initial collision count"))
+    average_file = open("resultAverage.csv", "w", buffering=1)
+    average_file.write("{},{},{},{},{},{},{},{}\n".format(
+        "File",
+        "cost",
+        "time",
+        "expanded nodes", 
+        "generated nodes", 
+        "maximum nodes", 
+        "Initial collision count",
+        "sampleSize"))
 
+    median_file = open("resultMedian.csv", "w", buffering=1)
+    median_file.write("{},{},{},{},{},{},{},{}\n".format(
+        "File",
+        "cost",
+        "time",
+        "expanded nodes", 
+        "generated nodes", 
+        "maximum nodes", 
+        "Initial collision count",
+        "sampleSize"))
+
+    result = []
     
     for file in sorted(glob.glob(args.instance)):
+        result = []
         print("\n\n\n***Import instance {}***".format(file))
         my_map, starts, goals = import_mapf_instance(file)
         print_mapf_instance(my_map, starts, goals)
-        result_file.write("{},{},{},{},{},{},{}\n".format(file,"","","", "", "",""))
+        # result_file.write("{},{},{},{},{},{},{}\n".format(file,"","","", "", "",""))
         for i in range(args.repeat):
             cbs = CBSSolver(my_map, starts, goals)
             (paths, runtime, expanded, generated, maxNode, collisionCount) = cbs.find_solution(args.disjoint)
 
             cost = get_sum_of_cost(paths)
-            result_file.write("{},{},{},{},{},{},{}\n".format("", cost, runtime, expanded, generated, maxNode, collisionCount))
+            # result_file.write("{},{},{},{},{},{},{}\n".format("", cost, runtime, expanded, generated, maxNode, collisionCount))
+            result.append({
+                "cost": cost,
+                "runtime": runtime,
+                "nodeExpanded": expanded,
+                "nodeGenerated": generated,
+                "memoryUsed": maxNode,
+                "initialCollision": collisionCount
+            })
             
             if((not args.batch) and args.repeat==1 ):
                 print("***Test paths on a simulation***")
                 animation = Animation(my_map, starts, goals, paths)
                 # animation.save("output.mp4", 1.0)
                 animation.show()
-    result_file.close()
+        minCost = 1000
+        for instance in result:
+            if(instance["cost"]<minCost):
+                minCost = instance["cost"]
+        result = list(filter(lambda n: n["cost"] == minCost, result))
+        averageResult = getInstanceAverage(result)
+        medianResult = getInstanceMedian(result)
+        writeInstanceToFile(average_file, file, minCost, averageResult, len(result))
+        writeInstanceToFile(median_file, file, minCost, medianResult, len(result))
+
+    average_file.close()
