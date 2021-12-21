@@ -1,6 +1,6 @@
 # GhostofBirds
 
-Observes the trade-offs between space and time complexity between iterative deepening Conflict Based Search (CBS) and normal CBS.
+Observes the trade-offs between space and time complexity between iterative deepening Conflict Based Search (CBS) and standard CBS.
 
 ## Usages
 
